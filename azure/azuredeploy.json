@@ -1,0 +1,195 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "domainName": {
+            "type": "string",
+            "metadata": {
+                "description": "The domain name for the website"
+            }
+        }
+    },
+    "variables": {
+        "mx": "[concat(replace(parameters('domainName'),'.','-'),'.mail.protection.outlook.com')]",
+        "shortName": "[replace(parameters('domainName'),'.','')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/dnsZones",
+            "apiVersion": "2018-05-01",
+            "name": "[parameters('domainName')]",
+            "location": "global",
+            "properties": {},
+            "resources": [
+                {
+                    "type": "CNAME",
+                    "apiVersion": "2018-05-01",
+                    "name": "autodiscover",
+                    "location": "global",
+                    "properties": {
+                        "TTL": 3600,
+                        "CNAMERecord": {
+                            "cname": "autodiscover.outlook.com"
+                        }
+                    },
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/dnsZones','/',parameters('domainName'))]"
+                    ]
+                },
+                {
+                    "type": "CNAME",
+                    "apiVersion": "2018-05-01",
+                    "name": "msoid",
+                    "location": "global",
+                    "properties": {
+                        "TTL": 3600,
+                        "CNAMERecord": {
+                            "cname": "clientconfig.microsoftonline-p.net"
+                        }
+                    },
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/dnsZones','/',parameters('domainName'))]"
+                    ]
+                },
+                {
+                    "type": "MX",
+                    "apiVersion": "2018-05-01",
+                    "name": "@",
+                    "location": "global",
+                    "properties": {
+                        "TTL": 3600,
+                        "MXRecords": [
+                            {
+                                "exchange": "[variables('mx')]",
+                                "preference": 0
+                            }
+                        ]
+                    },
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/dnsZones','/',parameters('domainName'))]"
+                    ]
+                },
+                {
+                    "type": "TXT",
+                    "name": "@",
+                    "apiVersion": "2018-05-01",
+                    "properties": {
+                        "TTL": 3600,
+                        "TXTRecords": [
+                            {
+                                "value": [
+                                    "v=spf1 include:spf.protection.outlook.com -all"
+                                ]
+                            }
+                        ]
+                    },
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/dnsZones','/',parameters('domainName'))]"
+                    ]
+                },
+                {
+                    "type": "CNAME",
+                    "apiVersion": "2018-05-01",
+                    "name": "www",
+                    "location": "global",
+                    "properties": {
+                        "TTL": 3600,
+                        "CNAMERecord": {
+                            "cname": "[replace(replace(reference(concat('Microsoft.Cdn/profiles/',variables('shortName'),'/endpoints/',variables('shortName'))).hostname,'https://',''),'/','')]"
+                        }
+                    },
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/dnsZones','/',parameters('domainName'))]"
+                    ]
+                },
+                {
+                    "type": "A",
+                    "apiVersion": "2018-05-01",
+                    "name": "@",
+                    "location": "global",
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/dnsZones','/',parameters('domainName'))]",
+                        "[resourceId('Microsoft.Cdn/profiles/endpoints', variables('shortName'), variables('shortName'))]"
+                    ],
+                    "properties": {
+                        "TTL": 3600,
+                        "targetResource": {
+                            "id": "[resourceId('Microsoft.Cdn/profiles/endpoints', variables('shortName'), variables('shortName'))]"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2018-07-01",
+            "name": "[variables('shortName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "accessTier": "Hot",
+                "supportsHttpsTrafficOnly": true
+            },
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "StorageV2"
+        },
+        {
+            "type": "Microsoft.Cdn/profiles",
+            "apiVersion": "2019-04-15",
+            "name": "[variables('shortName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard_Microsoft"
+            },
+            "resources": [
+                {
+                    "type": "endpoints",
+                    "apiVersion": "2016-04-02",
+                    "location": "[resourceGroup().location]",
+                    "name": "[variables('shortName')]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Storage/storageAccounts/',variables('shortName'))]",
+                        "[concat('Microsoft.Cdn/profiles/',variables('shortName'))]"
+                    ],
+                    "properties": {
+                        "isHttpAllowed": false,
+                        "isHttpsAllowed": true,
+                        "queryStringCachingBehavior": "IgnoreQueryString",
+                        "isCompressionEnabled": true,
+                        "contentTypesToCompress": [
+                            "text/plain",
+                            "text/html",
+                            "text/css",
+                            "application/x-javascript",
+                            "text/javascript"
+                        ],
+                        "originHostHeader": "[replace(replace(reference(concat('Microsoft.Storage/storageAccounts/',variables('shortName'))).primaryEndpoints.blob,'https://',''),'/','')]",
+                        "origins": [
+                            {
+                                "name": "storageOrigin",
+                                "properties": {
+                                    "hostName": "[replace(replace(reference(concat('Microsoft.Storage/storageAccounts/',variables('shortName'))).primaryEndpoints.blob,'https://',''),'/','')]"
+                                }
+                            }
+                        ]
+                    },
+                    "resources": [
+                        {
+                            "type": "customDomains",
+                            "name": "[variables('shortName')]",
+                            "apiVersion": "2016-04-02",
+                            "properties": {
+                                "hostName": "[parameters('domainName')]"
+                            },
+                            "dependsOn": [
+                                "[concat('Microsoft.Cdn/profiles/',variables('shortName'),'/endpoints/',variables('shortName'))]"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "outputs": {}
+}
