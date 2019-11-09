@@ -132,7 +132,17 @@
             "sku": {
                 "name": "Standard_LRS"
             },
-            "kind": "StorageV2"
+            "kind": "StorageV2",
+            "resources":[
+                {
+                    "type": "blobServices/containers",
+                    "apiVersion": "2018-07-01",
+                    "name": "default/$web",
+                    "dependsOn": [
+                        "[variables('shortName')]"
+                    ]
+                }
+            ]
         },
         {
             "type": "Microsoft.Cdn/profiles",
