@@ -1,0 +1,121 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "storageAccountName": {
+            "type": "string",
+            "metadata": {
+                "description": "A name for the storage account"
+            }
+        },
+        "domainName": {
+            "type": "string",
+            "metadata": {
+                "description": "The main domain for the DNS zone"
+            }
+        },
+        "domainPrefix": {
+           "type": "string",
+           "metadata": {
+                "description": "A prefix to append to the domain name, if desired"
+            }
+        },
+        "dnsRecordName": {
+           "type": "string",
+           "metadata": {
+                "description": "The name for the DNS record, either @ or the prefix"
+            }
+        },
+        "cdnProfileName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name given to the CDN profile"
+            }
+        },
+        "cdnEndpointName": {
+           "type": "string",
+           "metadata": {
+                "description": "description"
+            }
+        }
+    },
+    "variables": {
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2018-07-01",
+            "name": "[parameters('storageAccountName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "accessTier": "Hot",
+                "supportsHttpsTrafficOnly": true
+            },
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "StorageV2"
+        },
+        {
+            "type": "Microsoft.Cdn/profiles/endpoints",
+            "apiVersion": "2016-04-02",
+            "location": "[resourceGroup().location]",
+            "name": "[concat(parameters('cdnProfileName'), '/', parameters('cdnEndpointName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+            ],
+            "properties": {
+                "isHttpAllowed": false,
+                "isHttpsAllowed": true,
+                "queryStringCachingBehavior": "IgnoreQueryString",
+                "isCompressionEnabled": true,
+                "contentTypesToCompress": [
+                    "text/plain",
+                    "text/html",
+                    "text/css",
+                    "application/x-javascript",
+                    "text/javascript"
+                ],
+                "originHostHeader": "[replace(replace(reference(concat('Microsoft.Storage/storageAccounts/',parameters('storageAccountName'))).primaryEndpoints.web,'https://',''),'/','')]",
+                "origins": [
+                    {
+                        "name": "storageOrigin",
+                        "properties": {
+                            "hostName": "[replace(replace(reference(concat('Microsoft.Storage/storageAccounts/',parameters('storageAccountName'))).primaryEndpoints.web,'https://',''),'/','')]"
+                        }
+                    }
+                ]
+            },
+            "resources": [
+                {
+                    "type": "customDomains",
+                    "name": "customDomain",
+                    "apiVersion": "2016-04-02",
+                    "properties": {
+                        "hostName": "[concat(parameters('domainPrefix'), parameters('domainName'))]"
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Cdn/profiles/endpoints', parameters('cdnProfileName'), parameters('cdnEndpointName'))]"
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.Network/dnsZones/A",
+            "apiVersion": "2018-05-01",
+            "name": "[concat(parameters('domainName'), '/', parameters('dnsRecordName'))]",
+            "location": "global",
+            "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles/endpoints', parameters('cdnProfileName'), parameters('cdnEndpointName'))]"
+            ],
+            "properties": {
+                "TTL": 3600,
+                "targetResource": {
+                    "id": "[resourceId('Microsoft.Cdn/profiles/endpoints', parameters('cdnProfileName'), parameters('cdnEndpointName'))]"
+                }
+            }
+        }
+    ],
+    "outputs": {
+    }
+}
