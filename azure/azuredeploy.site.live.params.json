@@ -19,6 +19,9 @@
         },
         "cdnEndpointName": {
             "value": "garandsoftware"
+        },
+        "cdnVerifyDnsRecordName": {
+            "value": "cdnverify"
         }
     }
 }
