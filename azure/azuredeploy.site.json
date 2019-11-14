@@ -65,7 +65,7 @@
                 "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
             ],
             "properties": {
-                "isHttpAllowed": false,
+                "isHttpAllowed": true,
                 "isHttpsAllowed": true,
                 "queryStringCachingBehavior": "IgnoreQueryString",
                 "isCompressionEnabled": true,
