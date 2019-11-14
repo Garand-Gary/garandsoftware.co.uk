@@ -9,8 +9,8 @@
             }
         },
         "cdnProfileName": {
-           "type": "string",
-           "metadata": {
+            "type": "string",
+            "metadata": {
                 "description": "The name to give the CDN profile"
             }
         }
@@ -24,7 +24,8 @@
             "apiVersion": "2018-05-01",
             "name": "[parameters('domainName')]",
             "location": "global",
-            "properties": {},
+            "properties": {
+            },
             "resources": [
                 {
                     "type": "CNAME",
@@ -50,6 +51,66 @@
                         "TTL": 3600,
                         "CNAMERecord": {
                             "cname": "clientconfig.microsoftonline-p.net"
+                        }
+                    },
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/dnsZones','/',parameters('domainName'))]"
+                    ]
+                },
+                {
+                    "type": "CNAME",
+                    "apiVersion": "2018-05-01",
+                    "name": "sip",
+                    "location": "global",
+                    "properties": {
+                        "TTL": 3600,
+                        "CNAMERecord": {
+                            "cname": "sipdir.online.lync.com"
+                        }
+                    },
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/dnsZones','/',parameters('domainName'))]"
+                    ]
+                },
+                {
+                    "type": "CNAME",
+                    "apiVersion": "2018-05-01",
+                    "name": "lyncdiscover",
+                    "location": "global",
+                    "properties": {
+                        "TTL": 3600,
+                        "CNAMERecord": {
+                            "cname": "webdir.online.lync.com"
+                        }
+                    },
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/dnsZones','/',parameters('domainName'))]"
+                    ]
+                },
+                {
+                    "type": "CNAME",
+                    "apiVersion": "2018-05-01",
+                    "name": "enterpriseregistration",
+                    "location": "global",
+                    "properties": {
+                        "TTL": 3600,
+                        "CNAMERecord": {
+                            "cname": "enterpriseregistration.windows.net"
+                        }
+                    },
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/dnsZones','/',parameters('domainName'))]"
+                    ]
+                },
+                {
+                    "type": "CNAME",
+                    "apiVersion": "2018-05-01",
+                    "name": "enterpriseenrollment",
+                    "location": "global",
+                    "properties": {
+                        "TTL": 3600,
+                        "CNAMERecord": {
+                            "cname": "enterpriseenrollment.manage.microsoft.com"
                         }
                     },
                     "dependsOn": [
@@ -91,6 +152,44 @@
                     "dependsOn": [
                         "[concat('Microsoft.Network/dnsZones','/',parameters('domainName'))]"
                     ]
+                },
+                {
+                    "type": "SRV",
+                    "name": "_sipfederationtls._tcp",
+                    "apiVersion": "2018-05-01",
+                    "properties": {
+                        "TTL": 3600,
+                        "SRVRecords": [
+                            {
+                                "port": 5061,
+                                "priority": 100,
+                                "target": "sipfed.online.lync.com",
+                                "weight": 1
+                            }
+                        ]
+                    },
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/dnsZones','/',parameters('domainName'))]"
+                    ]
+                },
+                {
+                    "type": "SRV",
+                    "name": "_sip._tls",
+                    "apiVersion": "2018-05-01",
+                    "properties": {
+                        "TTL": 3600,
+                        "SRVRecords": [
+                            {
+                                "port": 443,
+                                "priority": 100,
+                                "target": "sipdir.online.lync.com",
+                                "weight": 1
+                            }
+                        ]
+                    },
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/dnsZones','/',parameters('domainName'))]"
+                    ]
                 }
             ]
         },
@@ -104,5 +203,6 @@
             }
         }
     ],
-    "outputs": {}
+    "outputs": {
+    }
 }
