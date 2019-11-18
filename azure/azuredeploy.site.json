@@ -15,14 +15,14 @@
             }
         },
         "domainPrefix": {
-           "type": "string",
-           "metadata": {
+            "type": "string",
+            "metadata": {
                 "description": "A prefix to append to the domain name, if desired"
             }
         },
         "dnsRecordName": {
-           "type": "string",
-           "metadata": {
+            "type": "string",
+            "metadata": {
                 "description": "The name for the DNS record, either @ or the prefix"
             }
         },
@@ -33,9 +33,15 @@
             }
         },
         "cdnEndpointName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the CDN endpoint"
+            }
+        },
+        "cdnVerifyDnsRecordName": {
            "type": "string",
            "metadata": {
-                "description": "description"
+                "description": "The name of the CDN verification DNS CNAME record"
             }
         }
     },
@@ -65,7 +71,7 @@
                 "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
             ],
             "properties": {
-                "isHttpAllowed": false,
+                "isHttpAllowed": true,
                 "isHttpsAllowed": true,
                 "queryStringCachingBehavior": "IgnoreQueryString",
                 "isCompressionEnabled": true,
@@ -114,6 +120,21 @@
                     "id": "[resourceId('Microsoft.Cdn/profiles/endpoints', parameters('cdnProfileName'), parameters('cdnEndpointName'))]"
                 }
             }
+        },
+        {
+            "type": "Microsoft.Network/dnsZones/CNAME",
+            "apiVersion": "2018-05-01",
+            "name": "[concat(parameters('domainName'), '/', parameters('cdnVerifyDnsRecordName'))]",
+            "location": "global",
+            "properties": {
+                "TTL": 3600,
+                "CNAMERecord": {
+                    "cname": "[concat('cdnverify.',replace(replace(reference(resourceId('Microsoft.Cdn/profiles/endpoints', parameters('cdnProfileName'), parameters('cdnEndpointName')),'2016-04-02').hostName,'https://',''),'/',''))]"
+                }
+            },
+            "dependsOn": [              
+                "[resourceId('Microsoft.Cdn/profiles/endpoints', parameters('cdnProfileName'), parameters('cdnEndpointName'))]"
+            ]
         }
     ],
     "outputs": {
