@@ -93,7 +93,7 @@
             "resources": [
                 {
                     "type": "customDomains",
-                    "name": "customDomain",
+                    "name": "[parameters('domainPrefix')]",
                     "apiVersion": "2016-04-02",
                     "properties": {
                         "hostName": "[concat(parameters('domainPrefix'), '.', parameters('domainName'))]"
