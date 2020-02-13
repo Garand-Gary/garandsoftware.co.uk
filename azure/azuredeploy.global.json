@@ -7,12 +7,6 @@
             "metadata": {
                 "description": "The main domain for the DNS zone"
             }
-        },
-        "cdnProfileName": {
-            "type": "string",
-            "metadata": {
-                "description": "The name to give the CDN profile"
-            }
         }
     },
     "variables": {
@@ -192,15 +186,6 @@
                     ]
                 }
             ]
-        },
-        {
-            "type": "Microsoft.Cdn/profiles",
-            "apiVersion": "2019-04-15",
-            "name": "[parameters('cdnProfileName')]",
-            "location": "[resourceGroup().location]",
-            "sku": {
-                "name": "Standard_Microsoft"
-            }
         }
     ],
     "outputs": {

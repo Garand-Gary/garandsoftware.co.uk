@@ -4,9 +4,6 @@
     "parameters": {
         "domainName": {
             "value": "garandsoftware.co.uk"
-        },
-        "cdnProfileName": {
-            "value": "garandsoftware"
         }
     }
 }
