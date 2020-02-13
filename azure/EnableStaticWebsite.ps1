@@ -1,11 +1,15 @@
 [CmdletBinding()]
 param (
+    [Parameter(Mandatory=$true)]
     [string]
     $resourceGroupName,
+    [Parameter(Mandatory=$true)]
     [string]
     $storageAccountName,
+    [Parameter(Mandatory=$true)]
     [string]
     $indexDocument,
+    [Parameter(Mandatory=$true)]
     [string]
     $errorDocument
 )

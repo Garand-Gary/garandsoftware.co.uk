@@ -20,12 +20,6 @@
                 "description": "A prefix to append to the domain name, if desired"
             }
         },
-        "dnsRecordName": {
-            "type": "string",
-            "metadata": {
-                "description": "The name for the DNS record, either @ or the prefix"
-            }
-        },
         "cdnProfileName": {
             "type": "string",
             "metadata": {
@@ -36,12 +30,6 @@
             "type": "string",
             "metadata": {
                 "description": "The name of the CDN endpoint"
-            }
-        },
-        "cdnVerifyDnsRecordName": {
-           "type": "string",
-           "metadata": {
-                "description": "The name of the CDN verification DNS CNAME record"
             }
         }
     },
@@ -63,12 +51,22 @@
             "kind": "StorageV2"
         },
         {
+            "type": "Microsoft.Cdn/profiles",
+            "apiVersion": "2019-04-15",
+            "name": "[parameters('cdnProfileName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard_Microsoft"
+            }
+        },
+        {
             "type": "Microsoft.Cdn/profiles/endpoints",
             "apiVersion": "2016-04-02",
             "location": "[resourceGroup().location]",
             "name": "[concat(parameters('cdnProfileName'), '/', parameters('cdnEndpointName'))]",
             "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+                "[resourceId('Microsoft.Cdn/profiles', parameters('cdnProfileName'))]"
             ],
             "properties": {
                 "isHttpAllowed": true,
@@ -95,10 +93,10 @@
             "resources": [
                 {
                     "type": "customDomains",
-                    "name": "customDomain",
+                    "name": "[parameters('domainPrefix')]",
                     "apiVersion": "2016-04-02",
                     "properties": {
-                        "hostName": "[concat(parameters('domainPrefix'), parameters('domainName'))]"
+                        "hostName": "[concat(parameters('domainPrefix'), '.', parameters('domainName'))]"
                     },
                     "dependsOn": [
                         "[resourceId('Microsoft.Cdn/profiles/endpoints', parameters('cdnProfileName'), parameters('cdnEndpointName'))]"
@@ -107,9 +105,9 @@
             ]
         },
         {
-            "type": "Microsoft.Network/dnsZones/A",
+            "type": "Microsoft.Network/dnsZones/CNAME",
             "apiVersion": "2018-05-01",
-            "name": "[concat(parameters('domainName'), '/', parameters('dnsRecordName'))]",
+            "name": "[concat(parameters('domainName'), '/', parameters('domainPrefix'))]",
             "location": "global",
             "dependsOn": [
                 "[resourceId('Microsoft.Cdn/profiles/endpoints', parameters('cdnProfileName'), parameters('cdnEndpointName'))]"
@@ -120,21 +118,6 @@
                     "id": "[resourceId('Microsoft.Cdn/profiles/endpoints', parameters('cdnProfileName'), parameters('cdnEndpointName'))]"
                 }
             }
-        },
-        {
-            "type": "Microsoft.Network/dnsZones/CNAME",
-            "apiVersion": "2018-05-01",
-            "name": "[concat(parameters('domainName'), '/', parameters('cdnVerifyDnsRecordName'))]",
-            "location": "global",
-            "properties": {
-                "TTL": 3600,
-                "CNAMERecord": {
-                    "cname": "[concat('cdnverify.',replace(replace(reference(resourceId('Microsoft.Cdn/profiles/endpoints', parameters('cdnProfileName'), parameters('cdnEndpointName')),'2016-04-02').hostName,'https://',''),'/',''))]"
-                }
-            },
-            "dependsOn": [              
-                "[resourceId('Microsoft.Cdn/profiles/endpoints', parameters('cdnProfileName'), parameters('cdnEndpointName'))]"
-            ]
         }
     ],
     "outputs": {
