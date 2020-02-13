@@ -9,19 +9,13 @@
             "value": "garandsoftware.co.uk"
         },
         "domainPrefix": {
-            "value": "staging."
-        },
-        "dnsRecordName": {
             "value": "staging"
         },
         "cdnProfileName": {
-            "value": "garandsoftware"
+            "value": "garandsoftware-staging"
         },
         "cdnEndpointName": {
             "value": "garandsoftware-staging"
-        },
-        "cdnVerifyDnsRecordName": {
-            "value": "cdnverify.staging"
         }
     }
 }

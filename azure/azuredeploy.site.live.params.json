@@ -9,19 +9,13 @@
             "value": "garandsoftware.co.uk"
         },
         "domainPrefix": {
-            "value": ""
-        },
-        "dnsRecordName": {
-            "value": "@"
+            "value": "www"
         },
         "cdnProfileName": {
             "value": "garandsoftware"
         },
         "cdnEndpointName": {
             "value": "garandsoftware"
-        },
-        "cdnVerifyDnsRecordName": {
-            "value": "cdnverify"
         }
     }
 }
